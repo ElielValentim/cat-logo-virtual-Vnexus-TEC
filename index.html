@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>HDS · Proposta de Web Design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=Roboto:wght@500&display=swap" rel="stylesheet">
@@ -18,6 +18,9 @@
 :root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body.mob .deck,body.mob .slide{height:var(--vh,100dvh)}
+body.mob .vp{height:var(--vh,100dvh);bottom:auto}
 .vp{position:fixed;inset:0;overflow:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,sans-serif;overflow:hidden}
 body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 600px at 80% 0%,rgba(229,190,92,.16),transparent 60%),radial-gradient(800px 700px at 0% 100%,rgba(39,71,201,.28),transparent 60%),radial-gradient(500px 400px at 50% 50%,rgba(11,22,56,.6),transparent 70%);pointer-events:none}
@@ -533,9 +536,18 @@ h2 em,h1 em{font:italic 400 1.08em/1 var(--ser);letter-spacing:0}
 /* ===== MODO CELULAR: um slide por tela, sem rolagem ===== */
 .mtabs,.morebtn,.sheet{display:none}
 body.mob .slide{padding:58px 16px calc(80px + env(safe-area-inset-bottom));overflow:hidden;display:flex;flex-direction:column}
-body.mob .slide.txtonly{overflow-y:auto;display:block}
+body.mob .slide.txtonly{overflow:hidden;display:flex;flex-direction:column}
 body.mob .slide>.wrap{display:flex;flex-direction:column;gap:10px;margin:0;height:100%;align-items:stretch;grid-template-columns:none}
-body.mob .slide.txtonly>.wrap{height:auto;padding-bottom:12px}
+body.mob .slide.txtonly>.wrap{height:auto;margin:auto 0;transform-origin:top center}
+body.mob .slide .apv p,body.mob .slide .steps,body.mob .slide .typo,body.mob .slide .prin p,body.mob .slide .wrap>.note{display:none}
+body.mob .slide .apv>div{padding:10px 12px;align-items:center}
+body.mob .slide .apv b{font-size:14px}
+body.mob .slide .prin div{padding:12px}
+body.mob .slide .prin div::after{display:none}
+body.mob .sheet .apv{grid-template-columns:1fr}
+body.mob .sheet .steps{display:grid;grid-template-columns:1fr 1fr}
+body.mob .phone{touch-action:pan-y}
+body.mob .hs,body.mob .stories,body.mob .car{touch-action:pan-x}
 body.mob h1{font-size:34px;margin-bottom:8px}
 body.mob h2{font-size:24px;margin-bottom:6px}
 body.mob .verse{font-size:26px}
@@ -678,7 +690,7 @@ body.mob .sheet .cls{position:absolute;top:14px;right:14px;width:36px;height:36p
   <div>
     <p class="k">__G__ Cadastro com Google</p>
     <h2>O Google preenche, <em>a HDS completa</em></h2>
-    <p class="lead">Ao se inscrever com a conta Google, nome, e-mail e foto chegam prontos. O participante só informa o que é da HDS: o vínculo pastoral. Cadastro em menos de um minuto.</p>
+    <p class="lead">Ao se inscrever com a conta Google, nome, e-mail e foto chegam prontos. O participante só informa a função que executa nos HDS e o vínculo pastoral. Cadastro em menos de um minuto.</p>
     <div class="gfacts">
       <div><b>__G__ Vem do Google</b>Nome completo, e-mail verificado e foto de perfil.</div>
       <div><b>__I_users__ Pedido pela HDS</b>Pai pastor, igreja, localidade, região, nascimento, gênero e telefone.</div>
@@ -1236,19 +1248,25 @@ document.getElementById('pv').addEventListener('click',()=>go(cur-1));
 document.getElementById('nx').addEventListener('click',()=>go(cur+1));
 dots.addEventListener('click',e=>{const d=e.target.closest('[data-i]');if(d)go(+d.dataset.i);});
 document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea'))return;if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(cur+1);}if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}});
-let sx=null,sy=0;
-deck.addEventListener('pointerdown',e=>{if(e.target.closest('.phone,.deskwrap,button'))return;sx=e.clientX;sy=e.clientY;});
-deck.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)go(cur+(dx<0?1:-1));});
-deck.addEventListener('pointercancel',()=>sx=null);
+let sx=null,sy=0,st0=0;
+const noSwipe=t=>document.body.classList.contains('mob')?t.closest('.hs,.stories,.car,.mtabs,.nav,.top,.sheet,.feed'):t.closest('.phone,.deskwrap,button');
+const sStart=(x,y,t)=>{if(noSwipe(t)){sx=null;return;}sx=x;sy=y;st0=Date.now();};
+const sEnd=(x,y)=>{if(sx===null)return;const dx=x-sx,dy=y-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-st0<900)go(cur+(dx<0?1:-1));};
+document.addEventListener('touchstart',e=>{const p=e.touches[0];sStart(p.clientX,p.clientY,e.target);},{passive:true});
+document.addEventListener('touchend',e=>{const p=e.changedTouches[0];sEnd(p.clientX,p.clientY);},{passive:true});
+deck.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')sStart(e.clientX,e.clientY,e.target);});
+deck.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')sEnd(e.clientX,e.clientY);});
 
 /* ===== modo celular ===== */
 const LBL={home:'Início',cart:'Carteirinha',splash:'Abertura',login:'Login',gsheet:'Conta Google',cadG:'Cadastro',welcome:'Boas-vindas',stories:'Stories',com:'Comunicados',ago:'Eventos',agoDet:'Detalhe',ticket:'Ingresso',gincana:'Gincana',ranking:'Ranking',desafio:'Desafio',hinos:'Lista',hino:'Letra',admHino:'Cadastro da regência',videos:'Vídeos',redes:'Redes',perfil:'Perfil',notif:'Notificações',admHome:'Painel',admValida:'Validar',admCom:'Comunicado',aparencia:'Aparência'};
 const MQ=matchMedia('(max-width:700px)');
 const sheet=document.getElementById('sheet'),shc=document.getElementById('shc');
+const setVh=()=>{const h=(window.visualViewport&&visualViewport.height)||innerHeight;document.documentElement.style.setProperty('--vh',Math.round(h)+'px');};
+const fitTxt=()=>{if(!document.body.classList.contains('mob'))return;for(const sl of document.querySelectorAll('.slide.txtonly')){const w=sl.querySelector('.wrap');w.style.zoom=1;const cs=getComputedStyle(sl);const avail=sl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);const need=w.scrollHeight;if(need>avail)w.style.zoom=Math.max(.55,(avail-4)/need).toFixed(3);}};
 const fitPhones=()=>{if(!document.body.classList.contains('mob'))return;for(const st of document.querySelectorAll('.mstage')){const h=st.clientHeight,w=st.clientWidth;if(!h||!w)continue;const lab=st.querySelector('.mlab')?44:0;const z=Math.max(.42,Math.min(1,(h-lab-4)/626,(w-4)/300));st.style.setProperty('--pz',z.toFixed(3));}};
 const showTab=(st,i)=>{const hs=[...st.children];hs.forEach((h,j)=>h.classList.toggle('mhide',j!==i));const tb=st._tabs;if(tb)[...tb.children].forEach((b,j)=>b.classList.toggle('on',j===i));};
 const setupMob=()=>{for(const sl of slides){const wrap=sl.querySelector('.wrap');const st=sl.querySelector('.stage,.cluster,.modecmp');
-  if(!st){sl.classList.add('txtonly');continue;}
+  if(!st){sl.classList.add('txtonly');const tx=wrap.querySelector(':scope>div');if(tx){const mb=document.createElement('button');mb.className='morebtn';mb.innerHTML='Ler a explicação completa '+I('arrowR',14);mb.addEventListener('click',()=>{shc.innerHTML=wrap.innerHTML;shc.querySelectorAll('.morebtn,.deskwrap').forEach(x=>x.remove());sheet.classList.add('on');});tx.appendChild(mb);}continue;}
   st.classList.add('mstage');let box=st;while(box.parentElement!==wrap)box=box.parentElement;box.classList.add('mbox');
   if(box===st){const b=document.createElement('div');b.className='mbox';wrap.insertBefore(b,st);b.appendChild(st);const cap=st.nextElementSibling;box=b;}
   const txt=[...wrap.children].find(c=>c!==box&&c.tagName==='DIV');if(txt){txt.classList.add('mtxt');const mb=document.createElement('button');mb.className='morebtn';mb.innerHTML='Ler a explicação completa '+I('arrowR',14);mb.addEventListener('click',()=>{shc.innerHTML=txt.innerHTML;shc.querySelectorAll('.morebtn').forEach(x=>x.remove());shc.querySelectorAll('.cta[data-gt]').forEach(x=>x.remove());sheet.classList.add('on');});txt.appendChild(mb);}
@@ -1257,10 +1275,12 @@ const setupMob=()=>{for(const sl of slides){const wrap=sl.querySelector('.wrap')
 document.getElementById('shx').addEventListener('click',()=>sheet.classList.remove('on'));
 sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.classList.remove('on');});
 let mobReady=false;
-const applyMob=()=>{const on=MQ.matches;document.body.classList.toggle('mob',on);if(on&&!mobReady){setupMob();mobReady=true;}requestAnimationFrame(fitPhones);};
+const applyMob=()=>{const on=MQ.matches;document.body.classList.toggle('mob',on);setVh();if(on&&!mobReady){setupMob();mobReady=true;const tp=document.getElementById('tip');setTimeout(()=>tp&&tp.classList.add('gone'),7000);}requestAnimationFrame(()=>{fitPhones();fitTxt();});};
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>{setVh();requestAnimationFrame(()=>{fitPhones();fitTxt();});});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{fitPhones();fitTxt();});
 applyMob();
 try{MQ.addEventListener('change',applyMob)}catch(e){MQ.addListener(applyMob)}
-const rof=new ResizeObserver(()=>requestAnimationFrame(fitPhones));rof.observe(document.body);
+const rof=new ResizeObserver(()=>requestAnimationFrame(()=>{fitPhones();fitTxt();}));rof.observe(document.body);
 
 const m0=/^#s(\d+)$/.exec(location.hash);go(m0?(+m0[1]-1):0);
 
